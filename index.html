@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <title>drop.seanthorne.co.uk</title>
+  <link rel="preload" href="/fonts/host-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/martian-mono-latin.woff2" as="font" type="font/woff2" crossorigin />
+</head>
+<body class="min-h-dvh bg-bg font-sans text-body text-ink antialiased selection:bg-highlight">
+<main class="mx-auto flex min-h-dvh max-w-3xl flex-col gap-10 px-5 py-5 sm:px-8 sm:py-8">
+  <header class="flex min-h-13 flex-wrap items-center gap-x-4 gap-y-2 border-b border-rule pb-4">
+    <h1 class="font-mono text-body font-bold sm:text-mark">drop<span id="mark" class="inline-block animate-fall text-live">.</span><a
+            href="https://seanthorne.co.uk"
+            target="_blank"
+            rel="noopener"
+            class="font-normal text-muted underline-offset-4 hover:text-ink hover:underline"
+    >seanthorne.co.uk</a></h1>
+    <p
+            id="status"
+            role="status"
+            data-tone="busy"
+            class="order-3 flex w-full items-center gap-2 text-muted sm:order-2 sm:ml-auto sm:w-auto before:size-2 before:shrink-0 before:rounded-full before:bg-current data-[tone=busy]:before:animate-blink data-[tone=error]:text-danger data-[tone=live]:text-ink data-[tone=live]:before:animate-beat data-[tone=live]:before:bg-live"
+    >Starting</p>
+    <button id="disconnect-btn" type="button" hidden class="btn btn-sm btn-secondary order-2 ml-auto sm:order-3 sm:ml-0">Disconnect</button>
+  </header>
+
+  <!-- Incoming request -->
+  <section id="request" hidden role="alert" class="flex animate-slide-down flex-wrap items-center gap-x-8 gap-y-4 rounded-control bg-highlight px-5 py-4">
+    <div class="min-w-64 flex-1">
+      <h2 class="label">Incoming connection</h2>
+      <p>Another device entered your code. Only accept if it's yours or someone you're expecting.</p>
+    </div>
+    <div class="flex gap-2">
+      <button id="accept-btn" class="btn btn-primary">Accept</button>
+      <button id="decline-btn" class="btn btn-secondary border-ink">Decline</button>
+    </div>
+  </section>
+
+  <!-- Lobby: your code + connect box -->
+  <section id="lobby" class="grid gap-10 md:grid-cols-2 md:gap-y-12">
+    <div class="flex animate-rise flex-col gap-3 md:pr-10">
+      <h2 class="label">Your code</h2>
+      <p id="my-code" class="overflow-hidden py-1 font-mono text-code font-bold tracking-tight tabular-nums">····</p>
+      <p class="caption">Type this on the other device.</p>
+    </div>
+
+    <form id="connect-form" class="flex animate-rise flex-col [animation-delay:60ms] gap-3 border-t border-rule pt-10 md:border-t-0 md:border-l md:pt-0 md:pl-10">
+      <label for="code-input" class="label">Their code</label>
+      <div class="flex gap-2">
+        <input
+                id="code-input"
+                inputmode="numeric"
+                autocomplete="off"
+                maxlength="4"
+                placeholder="0000"
+                class="field h-12 w-36 px-4 font-mono text-entry tracking-[0.2em] tabular-nums"
+        />
+        <button id="connect-btn" class="btn btn-lg btn-primary">Connect</button>
+      </div>
+      <p class="caption">Or enter the code shown on the other device.</p>
+    </form>
+
+    <p class="caption max-w-prose animate-rise border-t border-rule pt-4 [animation-delay:120ms] md:col-span-2">
+      Text and files go straight between the two browsers. Nothing is uploaded or stored, and the session ends when either tab closes.
+    </p>
+  </section>
+
+  <!-- Connected session -->
+  <section id="session" hidden class="group flex flex-col gap-10">
+    <form
+            id="text-form"
+            class="flex animate-rise flex-col gap-3 rounded-control group-data-dragging:animate-breathe group-data-dragging:outline-2 group-data-dragging:outline-offset-8 group-data-dragging:outline-live group-data-dragging:outline-dashed"
+    >
+      <label for="text-input" class="label">Send to the other device</label>
+      <textarea
+              id="text-input"
+              rows="4"
+              placeholder="Paste a link, a note, a snippet…"
+              class="field resize-y p-3 font-mono text-base sm:text-small"
+      ></textarea>
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="submit" class="btn btn-primary">Send</button>
+        <label class="btn btn-secondary">
+          Attach files
+          <input id="file-input" type="file" multiple class="sr-only" />
+        </label>
+        <p class="caption w-full group-data-dragging:font-semibold group-data-dragging:text-ink sm:ml-auto sm:w-auto">
+          Enter sends, Shift+Enter adds a line. Drop files anywhere.
+        </p>
+      </div>
+    </form>
+
+    <div class="animate-rise [animation-delay:60ms]">
+      <h2 class="label border-b border-rule pb-2">Shared</h2>
+      <ul id="feed" class="peer divide-y divide-rule"></ul>
+      <p class="hidden py-6 text-muted peer-empty:block">
+        Nothing yet. Items appear here newest first and are gone when you close the tab.
+      </p>
+    </div>
+  </section>
+</main>
+
+<!-- Full-screen viewer for one text item. Esc or Close dismisses it. -->
+<dialog
+        id="viewer"
+        aria-labelledby="viewer-title"
+        class="fixed inset-0 m-0 size-full max-h-none max-w-none bg-bg p-0 text-ink backdrop:bg-ink/40 open:flex open:animate-rise open:flex-col"
+>
+  <header class="flex items-center gap-4 border-b border-rule px-5 py-3 sm:px-8">
+    <h2 id="viewer-title" class="label"></h2>
+    <div class="ml-auto flex gap-2">
+      <button id="viewer-copy" type="button" class="btn btn-sm btn-secondary">Copy</button>
+      <form method="dialog"><button class="btn btn-sm btn-primary">Close</button></form>
+    </div>
+  </header>
+  <div data-scroll tabindex="0" class="flex-1 overflow-auto focus-visible:outline-offset-[-2px]">
+    <div class="flex min-h-full min-w-max font-mono text-small">
+      <pre id="viewer-gutter" aria-hidden="true" class="sticky left-0 border-r border-rule bg-bg py-4 pr-3 pl-5 text-right text-muted select-none sm:pl-8"></pre>
+      <pre id="viewer-code" class="py-4 pr-8 pl-4"></pre>
+    </div>
+  </div>
+  <footer class="flex gap-4 border-t border-rule px-5 py-1.5 text-small text-muted sm:px-8">
+    <span id="viewer-stats" class="tabular-nums"></span>
+    <span class="ml-auto">Esc to close</span>
+  </footer>
+</dialog>
+
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
